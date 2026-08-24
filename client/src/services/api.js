@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const API_BASE = 'https://healthcare-api-zs24.onrender.com/api';
 
 // Helper for fetch with Authorization header
 async function request(endpoint, options = {}) {
