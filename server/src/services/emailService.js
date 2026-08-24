@@ -68,7 +68,7 @@ const sendEmail = async ({
   try {
     const mailer = await getTransporter();
     const mailOptions = {
-      from: process.env.EMAIL_FROM || '"NexusCare Clinic" <appointments@nexuscare.clinic>',
+      from: process.env.EMAIL_FROM || '"Healthcare Clinic" <appointments@Healthcare.clinic>',
       to,
       subject,
       text: text || subject,
@@ -138,7 +138,7 @@ const sendBookingConfirmationEmails = async (appointment, patient, doctor, docto
         </p>
       </div>
       <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-      <p style="color: #94a3b8; font-size: 12px; text-align: center;">NexusCare Medical Systems • Automated Healthcare Gateway</p>
+      <p style="color: #94a3b8; font-size: 12px; text-align: center;">Healthcare Medical Systems • Automated Healthcare Gateway</p>
     </div>
   `;
 
@@ -161,7 +161,7 @@ const sendBookingConfirmationEmails = async (appointment, patient, doctor, docto
 
         <p><strong>Chief Patient Symptoms:</strong> ${appointment.patientSymptoms}</p>
       </div>
-      <p style="color: #94a3b8; font-size: 12px; text-align: center;">NexusCare Doctor Portal</p>
+      <p style="color: #94a3b8; font-size: 12px; text-align: center;">Healthcare Doctor Portal</p>
     </div>
   `;
 
@@ -210,7 +210,7 @@ const sendDoctorLeaveCancellationEmail = async (appointment, patient, doctorUser
 
         <p>Please log in to your patient portal to select an alternative slot or book with another specialist.</p>
       </div>
-      <p style="color: #94a3b8; font-size: 12px; text-align: center;">NexusCare Patient Services</p>
+      <p style="color: #94a3b8; font-size: 12px; text-align: center;">Healthcare Patient Services</p>
     </div>
   `;
 
@@ -248,7 +248,7 @@ const sendMedicationReminderEmail = async (patient, reminder) => {
 
         <p style="color: #64748b; font-size: 14px;">Remember to drink plenty of water and follow all prescription dietary recommendations.</p>
       </div>
-      <p style="color: #94a3b8; font-size: 12px; text-align: center;">NexusCare Patient Health Tracker</p>
+      <p style="color: #94a3b8; font-size: 12px; text-align: center;">Healthcare Patient Health Tracker</p>
     </div>
   `;
 

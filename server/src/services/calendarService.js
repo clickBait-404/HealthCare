@@ -9,13 +9,13 @@ const { google } = require('googleapis');
 const generateGoogleCalendarUrl = (appointment, doctorName, specialization, patientName) => {
   const title = encodeURIComponent(`Medical Consultation: Dr. ${doctorName} & ${patientName}`);
   const details = encodeURIComponent(
-    `NexusCare Appointment Code: ${appointment.appointmentCode}\n` +
+    `Healthcare Appointment Code: ${appointment.appointmentCode}\n` +
     `Doctor: Dr. ${doctorName} (${specialization})\n` +
     `Patient: ${patientName}\n` +
     `Symptoms: ${appointment.patientSymptoms}\n` +
-    `Location: NexusCare Health Portal / Clinic Room`
+    `Location: Healthcare Health Portal / Clinic Room`
   );
-  const location = encodeURIComponent('NexusCare Medical Center, Suite 402 / Virtual Telehealth');
+  const location = encodeURIComponent('Healthcare Medical Center, Suite 402 / Virtual Telehealth');
 
   // Convert date 'YYYY-MM-DD' and time 'HH:mm' to UTC/ISO format for calendar
   const dateFormatted = appointment.date.replace(/-/g, '');
@@ -35,17 +35,17 @@ const generateIcsContent = (appointment, doctorName, specialization, patientName
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//NexusCare Health Systems//Appointment Manager//EN',
+    'PRODID:-//Healthcare Health Systems//Appointment Manager//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:REQUEST',
     'BEGIN:VEVENT',
-    `UID:${appointment.appointmentCode}@nexuscare.clinic`,
+    `UID:${appointment.appointmentCode}@Healthcare.clinic`,
     `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
     `DTSTART:${dateFormatted}T${startClean}`,
     `DTEND:${dateFormatted}T${endClean}`,
     `SUMMARY:Medical Consultation: Dr. ${doctorName} with ${patientName}`,
-    `DESCRIPTION:NexusCare Appointment (${appointment.appointmentCode})\\nSpecialization: ${specialization}\\nSymptoms: ${appointment.patientSymptoms}`,
-    'LOCATION:NexusCare Clinic',
+    `DESCRIPTION:Healthcare Appointment (${appointment.appointmentCode})\\nSpecialization: ${specialization}\\nSymptoms: ${appointment.patientSymptoms}`,
+    'LOCATION:Healthcare Clinic',
     'STATUS:CONFIRMED',
     'END:VEVENT',
     'END:VCALENDAR',
