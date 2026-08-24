@@ -1,94 +1,209 @@
-# NexusCare System Design Document
+# Healthcare System Design Document
+
 *Architectural Deep-Dive: Concurrency Control, Conflict Resolution, LLM Triage, and Resilient Notification Pipelines*
 
 ---
 
 ## 1. Concurrency Architecture & Double-Booking Prevention
 
-In a high-throughput medical appointment platform, concurrent users frequently attempt to book identical doctor time slots simultaneously. NexusCare employs a defense-in-depth concurrency model utilizing a **Two-Phase Slot Reservation Protocol**:
+In a high-throughput medical appointment platform, concurrent users may attempt to book the same doctor time slot simultaneously. Healthcare uses a **two-phase slot reservation protocol** combining a short-lived database hold with transactional confirmation.
 
-```
+```text
 +--------------------------------------------------------------------------------+
-|  User A: [Selects Slot] -> [POST /hold] -> [5-Min TTL Hold in DB]             |
-|  User B: [Attempts Slot] -> [Hold Check Fails] -> [400 "Held by Other Patient"]|
+| User A: [Selects Slot] -> [POST /hold] -> [5-Min TTL Hold in DB]              |
+| User B: [Attempts Slot] -> [Hold Check Fails] -> [400 "Held by Other Patient"]|
 |                                                                                |
-|  User A: [Submits Symptoms] -> [DB Transaction BEGIN]                          |
-|         -> Re-verify Hold & Final Slot State                                   |
-|         -> INSERT Appointment (Unique Constraint: doctorId_date_startTime)     |
-|         -> DELETE SlotHold                                                     |
-|         -> DB Transaction COMMIT                                               |
+| User A: [Submits Symptoms] -> [DB Transaction BEGIN]                           |
+|          -> Re-verify Hold & Final Slot State                                  |
+|          -> INSERT Appointment (Unique Constraint: doctorId_date_startTime)    |
+|          -> DELETE SlotHold                                                    |
+|          -> DB Transaction COMMIT                                              |
 +--------------------------------------------------------------------------------+
 ```
 
-### Key Technical Mechanisms:
-1. **Atomic 5-Minute Slot Hold (Phase 1)**:
-   - When a patient clicks an available slot, `POST /api/appointments/hold` generates a cryptographically unique `holdToken` with a 5-minute TTL (`expiresAt = NOW() + 5m`).
-   - SQLite/Prisma enforces a composite unique constraint `@@unique([doctorId, date, startTime])` on the `SlotHold` table.
-   - Any simultaneous request by another patient is immediately rejected with a `400 Slot is currently held` error before touching checkout logic.
-2. **ACID Transactional Confirmation (Phase 2)**:
-   - During final symptom checkout, `confirmAppointment` runs inside a serialized `prisma.$transaction`.
-   - The transaction re-validates that no confirmed booking exists, confirms the caller's `holdToken` has not expired, inserts the confirmed `Appointment`, and atomically releases the `SlotHold`.
-   - Database-level unique indexing guarantees mathematical prevention of double-booking under extreme concurrent race conditions.
+### Key Technical Mechanisms
+
+1. **Atomic 5-Minute Slot Hold (Phase 1)**
+   - `POST /api/appointments/hold` generates a cryptographically unique `holdToken` with a 5-minute TTL (`expiresAt = NOW() + 5m`).
+   - PostgreSQL/Prisma enforces the composite unique constraint `@@unique([doctorId, date, startTime])` on the `SlotHold` table.
+   - A concurrent request for the same slot is rejected before checkout proceeds.
+
+2. **Transactional Confirmation (Phase 2)**
+   - During final checkout, `confirmAppointment` executes booking operations inside a Prisma database transaction.
+   - The transaction re-validates the hold, confirms the slot is still available, inserts the confirmed `Appointment`, and releases the `SlotHold`.
+   - The database-level unique constraint provides the final consistency guarantee against duplicate bookings under concurrent requests.
 
 ---
 
 ## 2. Doctor Leave Management & Cascade Conflict Handling
 
-When a doctor logs an unexpected leave day (e.g., conference or medical emergency), the clinic schedule must automatically reconcile without manual operator intervention:
+When a doctor marks an unexpected leave day, the clinic schedule reconciles affected appointments without requiring manual rescheduling of every appointment.
 
-```
+```text
 [Admin/Doctor Marks Leave Day]
-         │
-         ▼
+          |
+          v
 [prisma.$transaction]
-  ├── 1. UPSERT LeaveDay record @@unique([doctorId, date])
-  ├── 2. SELECT affected Appointments (status: 'CONFIRMED', date: leaveDate)
-  ├── 3. BATCH UPDATE Appointments -> status: 'CANCELLED', cancelledBy: 'SYSTEM_LEAVE'
-  ├── 4. PURGE all active SlotHolds for doctor on leaveDate
-  └── 5. DISPATCH async cancellation emails with custom leave reason & portal rebooking links
+  |- 1. UPSERT LeaveDay @@unique([doctorId, date])
+  |- 2. SELECT affected CONFIRMED Appointments
+  |- 3. BATCH UPDATE Appointments -> CANCELLED
+  |      cancelledBy = SYSTEM_LEAVE
+  |- 4. PURGE active SlotHolds for doctor/date
+  `- 5. DISPATCH async cancellation notifications
 ```
 
-- **Conflict Auditing**: The system returns the exact list and count of disrupted appointments.
-- **Graceful Client Experience**: If a patient opens a doctor's schedule for a leave date, the slot engine instantly flags the entire day as unavailable with the specific leave rationale displayed.
+- **Conflict Auditing:** The system returns the affected appointment list/count.
+- **Graceful Client Experience:** The slot engine treats a leave date as unavailable and surfaces the leave reason.
 
 ---
 
 ## 3. Slot Hold TTL Lifecycle & Expired Lock Reclamation
 
-- **Client-Side Visual Countdown**: When a slot is locked, a live visual countdown bar displays remaining seconds. When the timer hits 0:00, the UI automatically invalidates the session and prompts reselection.
-- **Server-Side Scheduled Sweeper**: A background worker cron (`* * * * *`) runs every 60 seconds, executing:
-  ```sql
-  DELETE FROM "SlotHold" WHERE "expiresAt" < datetime('now');
-  ```
-  This ensures abandoned booking sessions (e.g., browser tab closures or dropped connections) release slots back to the public pool within 60 seconds of expiration.
+### Client-Side Countdown
+
+When a slot is held, the frontend displays a live five-minute countdown. When the timer reaches zero, the client invalidates the hold and prompts the patient to select another slot.
+
+### Server-Side Sweeper
+
+A scheduled background worker runs every 60 seconds and removes expired holds:
+
+```sql
+DELETE FROM "SlotHold"
+WHERE "expiresAt" < NOW();
+```
+
+This releases abandoned reservations shortly after their TTL expires.
 
 ---
 
-## 4. Resilient Notification Pipelines & Retry Worker
+## 4. Resilient Notification Pipeline & Retry Worker
 
-Clinical communications (appointment confirmations, leave cancellations, and prescription dosage reminders) cannot afford silent failure. NexusCare treats email delivery as an asynchronous distributed event queue:
+Clinical communications such as appointment confirmations, leave cancellations, and medication reminders are handled asynchronously.
 
+```text
+[Application Event]
+        |
+        v
+[Send via Nodemailer/Ethereal]
+        |
+        +----------------------------+
+        |                            |
+        v                            v
+   [Success]                  [SMTP/Network Error]
+        |                            |
+        v                            v
+NotificationLog              NotificationLog
+status = SENT                status = RETRYING
+                                   |
+                                   v
+                         [Retry Worker / Cron]
+                                   |
+                         Exponential Backoff
+                              Max 3 Retries
 ```
-[Application Event] ──> [Send via Nodemailer/Ethereal]
-                              │
-               ┌──────────────┴──────────────┐
-               ▼ (Success)                   ▼ (Network / SMTP Error)
-      [NotificationLog]              [NotificationLog]
-      status: 'SENT'                 status: 'RETRYING' | attempts: 1
-                                             │
-                                             ▼ (Every 2 Minutes Cron)
-                                    [Retry Queue Worker]
-                                    Exponential Backoff (max 3 retries)
-```
 
-- **Idempotent Audit Trail**: Every notification attempt (role, recipient, payload, status, error message) is permanently recorded in `NotificationLog`.
-- **Scheduled Medication Reminders**: An automated background worker monitors active prescriptions and dispatches timely dose notifications according to prescription frequency (`ONCE_DAILY`, `TWICE_DAILY`, `THRICE_DAILY`).
-- **Failover Preview**: In local development and automated testing environments, Nodemailer dynamically boots temporary Ethereal test inboxes and attaches one-click preview URLs in the audit log for zero-friction verification.
+- **Audit Trail:** Notification attempts record recipient, payload, status, error information, and timestamps in `NotificationLog`.
+- **Medication Reminders:** Background jobs check active prescriptions and dispatch reminders according to prescription frequency.
+- **Development Verification:** Ethereal test mailboxes provide preview URLs for local testing.
 
 ---
 
 ## 5. Fault-Tolerant AI Medical Summary Engine
 
-- **Pre-Visit Triage**: Analyzes patient symptom narrative -> Classifies urgency (High / Medium / Low), extracts concise chief complaint, and crafts 3 targeted diagnostic questions for the doctor.
-- **Post-Visit Patient Education**: Converts physician shorthand notes -> Empathetic plain language summary, structured medication schedule table, and actionable recovery roadmap.
-- **Zero-Downtime Fallback**: If LLM API keys are missing or external AI APIs time out, the system automatically falls back to an internal deterministic clinical heuristic parser without throwing user-facing 500 errors.
+### Pre-Visit Triage
+
+The AI analyzes patient symptom input and returns:
+- Urgency: High / Medium / Low
+- Concise chief complaint
+- Three targeted diagnostic questions for the doctor
+
+### Post-Visit Patient Education
+
+The AI converts doctor notes, diagnosis, and prescriptions into:
+- Patient-friendly summaries
+- Structured medication schedules
+- Follow-up steps
+- Lifestyle guidance
+
+### Deterministic Fallback
+
+If Gemini/OpenAI credentials are missing or an external AI request fails, the application uses deterministic rule-based fallback logic. This keeps the core workflow functional during API outages, network failures, and local development without requiring an LLM provider.
+
+---
+
+## 6. Production Deployment Architecture
+
+The deployed frontend is hosted on Vercel and the backend is intended to run as a Node.js/Express service on Render. Production persistence uses PostgreSQL (Neon), while SQLite is intended for local development.
+
+```text
+                         ┌─────────────────────────────┐
+                         │ Vercel                      │
+                         │ React + Vite Frontend       │
+                         │ health-care-cyan-delta...   │
+                         └──────────────┬──────────────┘
+                                        |
+                                        | HTTPS REST API
+                                        v
+                         ┌─────────────────────────────┐
+                         │ Render                      │
+                         │ Node.js + Express Backend   │
+                         └──────────────┬──────────────┘
+                                        |
+                         ┌──────────────┴──────────────┐
+                         v                             v
+              ┌────────────────────┐        ┌────────────────────┐
+              │ Neon PostgreSQL     │        │ External Services  │
+              │ Prisma ORM          │        │ Gemini/OpenAI      │
+              │ Persistent Data     │        │ SMTP / Google      │
+              └────────────────────┘        └────────────────────┘
+```
+
+### Deployment Configuration
+
+- **Frontend:** Vercel
+- **Frontend URL:** `https://health-care-cyan-delta.vercel.app/`
+- **Frontend API variable:** `VITE_API_URL`
+- **Backend:** Render Node.js/Express service
+- **Database:** Neon PostgreSQL
+- **Local database:** SQLite for development
+
+> Production secrets such as `DATABASE_URL`, `JWT_SECRET`, API keys, SMTP credentials, and OAuth secrets must be configured through deployment environment variables and must never be committed to GitHub.
+
+---
+
+## 7. API and Security Boundaries
+
+The frontend communicates with the backend through REST endpoints under `/api`.
+
+Representative API groups include:
+
+```text
+/api/auth
+/api/doctors
+/api/appointments
+/api/consultations
+/api/admin
+/api/notifications
+```
+
+Authentication uses JWT-based authorization, with role-specific access for patients, doctors, and administrators.
+
+---
+
+## 8. Design Summary
+
+Healthcare uses several complementary reliability mechanisms:
+
+| Concern | Design |
+|---|---|
+| Concurrent booking | Slot hold + database unique constraint |
+| Final booking consistency | Prisma database transaction |
+| Abandoned reservations | Five-minute TTL + sweeper |
+| Doctor leave conflicts | Transactional cascade cancellation |
+| Notification failure | Audit log + retry worker |
+| AI provider failure | Deterministic fallback |
+| Production persistence | Neon PostgreSQL |
+| Frontend/backend separation | Vercel + Render |
+| Authentication | JWT + role-based authorization |
+
+The architecture is designed so that external services such as LLM providers, SMTP, and Google Calendar can fail without making the core appointment workflow completely unavailable.

@@ -1,4 +1,4 @@
-# 🏥 NexusCare — Healthcare Appointment & Follow-up Manager
+# 🏥 Healthcare — Healthcare Appointment & Follow-up Manager
 
 > An enterprise-grade, fullstack clinical scheduling and patient follow-up management platform built with **React (Vite)**, **Node.js (Express)**, **Prisma ORM (SQLite / PostgreSQL)**, and **AI Triage Integration**.
 
@@ -6,6 +6,7 @@
 
 ## 🌐 Live Application & Links
 
+* 🌐 **Live Application**: https://health-care-cyan-delta.vercel.app/
 * 📦 **GitHub Repository**: https://github.com/clickBait-404/HealthCare
 * 📝 **System Design Document**: [`SYSTEM_DESIGN.md`](./SYSTEM_DESIGN.md)
 
@@ -33,7 +34,7 @@
 
 ## 🌟 Overview & Key Features
 
-NexusCare is designed to modernize clinical workflows by eliminating double-booking race conditions, bridging the communication gap between patients and practitioners, and automating follow-up care:
+Healthcare is designed to modernize clinical workflows by eliminating double-booking race conditions, bridging the communication gap between patients and practitioners, and automating follow-up care:
 
 * **Role-Based Portals**: Distinct dashboards for **Patients**, **Doctors**, and **Clinic Administrators**.
 
@@ -61,7 +62,7 @@ NexusCare is designed to modernize clinical workflows by eliminating double-book
 | --------------------------- | ------------------------------------------------------------------------------------- |
 | **Frontend**                | React 18, Vite, Tailwind CSS, Lucide Icons, Date-fns, Canvas Confetti                 |
 | **Backend**                 | Node.js, Express.js, JSON Web Tokens (JWT), Bcrypt.js, Node-Cron, Nodemailer          |
-| **Database**                | Prisma ORM with SQLite (Local zero-config) / PostgreSQL ready                         |
+| **Database**                | Prisma ORM with SQLite (local development) / PostgreSQL (production)                         |
 | **AI / LLM**                | Google Gemini API (1.5-Flash) & OpenAI API (GPT-4o-mini) + Rule-based fallback engine |
 | **Calendar / Integrations** | Google Calendar API (OAuth 2.0), iCal RFC-5545 `.ics` generator                       |
 
@@ -165,10 +166,10 @@ You can log in with any of the following accounts.
 | ---------------- | ----------------- | ----------------------------- | ------------------------------------------------------------------------------ |
 | **Patient**      | Alex Morgan       | `alex.morgan@example.com`     | Slot locking, symptom triage intake, Google Calendar links, medication tracker |
 | **Patient**      | David Miller      | `david.miller@example.com`    | Past completed visits, AI post-visit care plans, active prescriptions          |
-| **Doctor**       | Dr. Sarah Jenkins | `dr.jenkins@nexuscare.clinic` | Cardiology, pre-visit triage urgency badges, clinical notes & Rx builder       |
-| **Doctor**       | Dr. Marcus Chen   | `dr.chen@nexuscare.clinic`    | Neurology, daily appointment roster, consultation room                         |
-| **Doctor**       | Dr. Elena Rostova | `dr.rostova@nexuscare.clinic` | General Medicine & Triage, acute care follow-ups                               |
-| **Clinic Admin** | Dr. Arthur Vance  | `admin@nexuscare.clinic`      | Doctor roster setup, working hours, leave declaration & conflict audits        |
+| **Doctor**       | Dr. Sarah Jenkins | `dr.jenkins@Healthcare.clinic` | Cardiology, pre-visit triage urgency badges, clinical notes & Rx builder       |
+| **Doctor**       | Dr. Marcus Chen   | `dr.chen@Healthcare.clinic`    | Neurology, daily appointment roster, consultation room                         |
+| **Doctor**       | Dr. Elena Rostova | `dr.rostova@Healthcare.clinic` | General Medicine & Triage, acute care follow-ups                               |
+| **Clinic Admin** | Dr. Arthur Vance  | `admin@Healthcare.clinic`      | Doctor roster setup, working hours, leave declaration & conflict audits        |
 
 > 💡 **Tip:** Use the **"Switch Persona"** menu in the top-right header for quick account switching.
 
@@ -206,7 +207,7 @@ SMTP_HOST=smtp.ethereal.email
 SMTP_PORT=587
 SMTP_USER=
 SMTP_PASS=
-EMAIL_FROM="NexusCare Clinic <appointments@nexuscare.clinic>"
+EMAIL_FROM="Healthcare Clinic <appointments@Healthcare.clinic>"
 
 # Google Calendar Integration (Optional)
 GOOGLE_CLIENT_ID=
@@ -216,11 +217,48 @@ GOOGLE_REDIRECT_URI=http://localhost:5050/api/calendar/oauth/callback
 
 > **Security:** Never commit `server/.env` to GitHub. Only commit `server/.env.example`.
 
+### Production Environment — Render
+
+For the deployed backend, configure these variables in Render:
+
+```env
+NODE_ENV=production
+PORT=10000
+CLIENT_URL=https://health-care-cyan-delta.vercel.app
+DATABASE_URL=<YOUR_NEON_POSTGRES_CONNECTION_STRING>
+JWT_SECRET=<YOUR_PRODUCTION_JWT_SECRET>
+
+GEMINI_API_KEY=
+OPENAI_API_KEY=
+
+EMAIL_SERVICE=smtp
+SMTP_HOST=smtp.ethereal.email
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
+EMAIL_FROM="Healthcare Clinic <appointments@Healthcare.clinic>"
+
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=https://<YOUR-RENDER-BACKEND>.onrender.com/api/calendar/oauth/callback
+```
+
+For the deployed React frontend on Vercel:
+
+```env
+VITE_API_URL=https://<YOUR-RENDER-BACKEND>.onrender.com
+```
+
+The frontend uses this value as the production API base URL.
+
+**Important:** Never commit the Neon connection string, JWT secret, API keys, SMTP credentials, or other secrets to GitHub.
+
+
 ---
 
 ## 🗄️ Database Schema & Models
 
-NexusCare uses Prisma ORM with relational models for users, doctors, appointments, slot holds, prescriptions, reminders, and notification auditing.
+Healthcare uses Prisma ORM with relational models for users, doctors, appointments, slot holds, prescriptions, reminders, and notification auditing.
 
 ### Core Models
 
@@ -237,7 +275,7 @@ NexusCare uses Prisma ORM with relational models for users, doctors, appointment
 
 ## 🧠 LLM Prompts & Clinical AI Engine
 
-NexusCare implements structured AI responses for two major workflows.
+Healthcare implements structured AI responses for two major workflows.
 
 ### 1. Pre-Visit Symptom Triage
 
@@ -272,7 +310,7 @@ The AI converts doctor notes, diagnosis, and prescriptions into:
 
 ### 3. Deterministic Fallback
 
-If Gemini/OpenAI credentials are unavailable or an API request fails, NexusCare uses deterministic rule-based clinical fallback logic.
+If Gemini/OpenAI credentials are unavailable or an API request fails, Healthcare uses deterministic rule-based clinical fallback logic.
 
 This allows the application to remain functional during:
 
@@ -285,7 +323,7 @@ This allows the application to remain functional during:
 
 ## 🔒 Concurrency & Slot Hold Mechanism
 
-NexusCare prevents two patients from booking the same appointment slot simultaneously.
+Healthcare prevents two patients from booking the same appointment slot simultaneously.
 
 ### 1. Temporary 5-Minute Hold
 
@@ -387,7 +425,7 @@ To enable OAuth 2.0 synchronization:
 
 ## ⏰ Background Jobs & Notification Retry Queue
 
-NexusCare uses scheduled background workers for:
+Healthcare uses scheduled background workers for:
 
 ### Slot Hold Cleanup
 
@@ -549,6 +587,8 @@ npm run server
 
 ### Frontend — Vercel
 
+**Live frontend:** https://health-care-cyan-delta.vercel.app/
+
 1. Import:
 
 ```text
@@ -593,10 +633,7 @@ Vite
               └──────────┘     └──────────────┘
 ```
 
-> **Production note:** For a persistent production deployment, PostgreSQL is recommended over local SQLite storage.
+> **Production note:** The deployed application uses PostgreSQL (Neon) for persistent production data. SQLite is intended for local development only.
 
 ---
 
-## 📄 License
-
-MIT License • Built for the NexusCare Healthcare Suite.
