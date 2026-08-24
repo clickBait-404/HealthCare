@@ -123,7 +123,7 @@ export default function DoctorPortal({ onOpenAuth }) {
         </div>
         <div className="flex items-center justify-center gap-3">
           <button
-            onClick={() => quickDemoLogin('dr.jenkins@nexuscare.clinic')}
+            onClick={() => quickDemoLogin('dr.jenkins@Healthcare.clinic')}
             className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-lg shadow-blue-500/20 transition-all"
           >
             1-Click Login as Dr. Sarah Jenkins

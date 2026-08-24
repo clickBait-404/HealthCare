@@ -116,7 +116,7 @@ export default function AdminPortal({ onOpenAuth }) {
         </div>
         <div className="flex items-center justify-center gap-3">
           <button
-            onClick={() => quickDemoLogin('admin@nexuscare.clinic')}
+            onClick={() => quickDemoLogin('admin@Healthcare.clinic')}
             className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-lg shadow-purple-500/20 transition-all"
           >
             1-Click Login as Admin (Dr. Arthur Vance)
@@ -373,7 +373,7 @@ export default function AdminPortal({ onOpenAuth }) {
                   <input
                     type="email"
                     required
-                    placeholder="dr.thorne@nexuscare.clinic"
+                    placeholder="dr.thorne@Healthcare.clinic"
                     value={newDoctorData.email}
                     onChange={(e) => setNewDoctorData({ ...newDoctorData, email: e.target.value })}
                     className="w-full text-xs p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white"
