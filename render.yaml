@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: nexuscare-healthcare-app
+    name: Healthcare-healthcare-app
     runtime: node
     plan: free
     buildCommand: npm run install:all && npm run build && npm run db:setup
