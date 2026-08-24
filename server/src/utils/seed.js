@@ -22,7 +22,7 @@ async function seedDatabase() {
   const admin = await prisma.user.create({
     data: {
       name: 'Dr. Arthur Vance (Clinic Director)',
-      email: 'admin@nexuscare.clinic',
+      email: 'admin@Healthcare.clinic',
       password: defaultPassword,
       role: 'ADMIN',
       phone: '+1 (555) 019-2834',
@@ -34,7 +34,7 @@ async function seedDatabase() {
   const doctor1User = await prisma.user.create({
     data: {
       name: 'Sarah Jenkins, MD',
-      email: 'dr.jenkins@nexuscare.clinic',
+      email: 'dr.jenkins@Healthcare.clinic',
       password: defaultPassword,
       role: 'DOCTOR',
       phone: '+1 (555) 392-1049',
@@ -59,7 +59,7 @@ async function seedDatabase() {
   const doctor2User = await prisma.user.create({
     data: {
       name: 'Marcus Chen, MD',
-      email: 'dr.chen@nexuscare.clinic',
+      email: 'dr.chen@Healthcare.clinic',
       password: defaultPassword,
       role: 'DOCTOR',
       phone: '+1 (555) 782-9012',
@@ -84,7 +84,7 @@ async function seedDatabase() {
   const doctor3User = await prisma.user.create({
     data: {
       name: 'Elena Rostova, MD',
-      email: 'dr.rostova@nexuscare.clinic',
+      email: 'dr.rostova@Healthcare.clinic',
       password: defaultPassword,
       role: 'DOCTOR',
       phone: '+1 (555) 881-4567',
@@ -168,7 +168,7 @@ async function seedDatabase() {
           'Have you recorded your resting pulse rate or blood pressure when feeling dizzy?',
           'Is there any family history of early-onset coronary artery disease or arrhythmias?',
         ],
-        generatedBy: 'NexusCare-AI Triage Core',
+        generatedBy: 'Healthcare-AI Triage Core',
       }),
       googleCalendarLink: 'https://calendar.google.com',
     },
@@ -194,7 +194,7 @@ async function seedDatabase() {
           'Are there any difficulties swallowing fluids or opening the jaw?',
           'Have you experienced any rash, body aches, or shortness of breath?',
         ],
-        generatedBy: 'NexusCare-AI Triage Core',
+        generatedBy: 'Healthcare-AI Triage Core',
       }),
       diagnosis: 'Acute Streptococcal Pharyngitis & Mild Dehydration',
       doctorNotes: 'Throat examination showed bilateral tonsillar erythema with mild exudates. Lungs clear to auscultation. Temperature 101.4F. Prescribed Amoxicillin 500mg, Paracetamol for fever spikes, and Lozenges. Advised warm salt water gargling and 2.5L fluids daily.',
@@ -223,7 +223,7 @@ async function seedDatabase() {
           'Schedule a follow-up visit if fever does not subside after 48 hours of antibiotics.',
         ],
         lifestyleAdvice: 'Isolate eating utensils, wash hands frequently, and prioritize 8 hours of sleep.',
-        generatedBy: 'NexusCare-AI Clinical Summary',
+        generatedBy: 'Healthcare-AI Clinical Summary',
       }),
     },
   });
