@@ -23,7 +23,7 @@ export default function AuthModal({ isOpen, onClose, defaultRole = 'PATIENT' }) 
     try {
       if (isRegister) {
         await register({ name, email, password, role, specialization });
-        addToast(`Welcome to NexusCare, ${name}! Account created.`, 'success');
+        addToast(`Welcome to Healthcare, ${name}! Account created.`, 'success');
       } else {
         await login(email, password);
         addToast('Successfully signed in!', 'success');
@@ -60,7 +60,7 @@ export default function AuthModal({ isOpen, onClose, defaultRole = 'PATIENT' }) 
             </div>
             <div>
               <h3 className="text-base font-bold">
-                {isRegister ? 'Create NexusCare Account' : 'Sign In to Portal'}
+                {isRegister ? 'Create Healthcare Account' : 'Sign In to Portal'}
               </h3>
               <p className="text-xs text-emerald-100">
                 Access your personalized healthcare portal
@@ -90,7 +90,7 @@ export default function AuthModal({ isOpen, onClose, defaultRole = 'PATIENT' }) 
               </button>
               <button
                 type="button"
-                onClick={() => handleQuickLogin('dr.jenkins@nexuscare.clinic')}
+                onClick={() => handleQuickLogin('dr.jenkins@Healthcare.clinic')}
                 className="p-1.5 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-900 dark:text-blue-200 font-semibold flex flex-col items-center gap-1"
               >
                 <Stethoscope className="w-4 h-4 text-blue-600" />
@@ -98,7 +98,7 @@ export default function AuthModal({ isOpen, onClose, defaultRole = 'PATIENT' }) 
               </button>
               <button
                 type="button"
-                onClick={() => handleQuickLogin('admin@nexuscare.clinic')}
+                onClick={() => handleQuickLogin('admin@Healthcare.clinic')}
                 className="p-1.5 bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-800 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900 text-purple-900 dark:text-purple-200 font-semibold flex flex-col items-center gap-1"
               >
                 <Shield className="w-4 h-4 text-purple-600" />

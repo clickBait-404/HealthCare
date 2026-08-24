@@ -55,7 +55,7 @@ function MainApp() {
               NX
             </div>
             <span className="font-bold text-slate-700 dark:text-slate-300">
-              NexusCare Healthcare Appointment & Follow-up Manager
+              Healthcare Healthcare Appointment & Follow-up Manager
             </span>
           </div>
 

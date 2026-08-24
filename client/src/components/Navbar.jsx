@@ -36,7 +36,7 @@ export default function Navbar({
             </div>
             <div>
               <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 bg-clip-text text-transparent">
-                NexusCare
+                Healthcare
               </span>
               <span className="hidden sm:block text-[10px] uppercase font-bold tracking-widest text-slate-400">
                 Clinical Scheduling & AI Follow-Up
@@ -130,7 +130,7 @@ export default function Navbar({
 
                 <button
                   onClick={() => {
-                    quickDemoLogin('dr.jenkins@nexuscare.clinic');
+                    quickDemoLogin('dr.jenkins@Healthcare.clinic');
                     setCurrentView('doctor');
                     setDropdownOpen(false);
                   }}
@@ -145,7 +145,7 @@ export default function Navbar({
 
                 <button
                   onClick={() => {
-                    quickDemoLogin('admin@nexuscare.clinic');
+                    quickDemoLogin('admin@Healthcare.clinic');
                     setCurrentView('admin');
                     setDropdownOpen(false);
                   }}
