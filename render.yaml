@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: nexuscare-healthcare-app
+    runtime: node
+    plan: free
+    buildCommand: npm run install:all && npm run build && npm run db:setup
+    startCommand: npm run server
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        value: "file:./dev.db"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: EMAIL_SERVICE
+        value: smtp
+      - key: SMTP_HOST
+        value: smtp.ethereal.email
+      - key: SMTP_PORT
+        value: 587
