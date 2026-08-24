@@ -135,7 +135,7 @@ const completeConsultation = async (req, res) => {
             You can access your complete digital medical records and upcoming medication reminders anytime on your patient dashboard.
           </p>
         </div>
-        <p style="color: #94a3b8; font-size: 12px; text-align: center;">NexusCare Patient Health Portal</p>
+        <p style="color: #94a3b8; font-size: 12px; text-align: center;">Healthcare Patient Health Portal</p>
       </div>
     `;
 

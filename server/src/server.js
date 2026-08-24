@@ -111,7 +111,7 @@ const autoSyncAndSeed = async () => {
 
 // Start Server & Background Cron Jobs
 app.listen(PORT, '0.0.0.0', async () => {
-  console.log(`🚀 NexusCare Server running on port ${PORT}`);
+  console.log(`🚀 Healthcare Server running on port ${PORT}`);
   await autoSyncAndSeed();
   initCronJobs();
 });
